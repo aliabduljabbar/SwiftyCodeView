@@ -6,6 +6,24 @@
 
 import UIKit
 
+#if canImport(RxCocoa)
+import RxSwift
+import RxCocoa
+extension Reactive where Base: SwiftyCodeView {
+    
+    /// Reactive wrapper for `code` property.
+    internal var code: ControlProperty<String> {
+        return controlProperty(editingEvents: [.allEditingEvents, .valueChanged],
+                               getter: { codeView in
+                                codeView.code
+        }, setter: { codeView, value in
+            codeView.code = value
+        })
+    }
+}
+#endif
+
+
 @objc
 public protocol SwiftyCodeViewDelegate: class {
     func codeView(sender: SwiftyCodeView, didFinishInput code: String)
@@ -24,13 +42,13 @@ open class SwiftyCodeView: UIControl {
     var stackView: UIStackView = {
         let stackView = UIStackView()
         stackView.axis = .horizontal
-        stackView.distribution = .equalSpacing
+        stackView.distribution = .fillEqually
         stackView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         return stackView
     }()
     
     fileprivate var items: [SwiftyCodeItemView] = []
-    open var code: String {
+    @objc open var code: String {
         get {
             let items = stackView.arrangedSubviews.map({$0 as! SwiftyCodeItemView})
             let values = items.map({$0.textField.text ?? ""})
@@ -55,6 +73,7 @@ open class SwiftyCodeView: UIControl {
     
     fileprivate func setupUI() {
         stackView.frame = self.bounds
+        stackView.spacing = (self.bounds.size.width/CGFloat(length))*0.10
         if stackView.superview == nil {
             addSubview(stackView)
         }
